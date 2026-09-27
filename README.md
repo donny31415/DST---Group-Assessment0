@@ -1,2 +1,3 @@
 # DST---Group-Assessment0
-Data Science Toolbox Group Sprint Assessment 0 - Don, Dylan, Rufus
+# Project Group
+Data Science Toolbox: Sprint Assessment 0 - Don Athipozhiyil, Dylan Sharpe, Rufus Hanna.
