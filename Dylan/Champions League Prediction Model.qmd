@@ -1,0 +1,721 @@
+---
+title: "Champions League Prediction Model"
+author: "Your Name"
+format:
+  html:
+    toc: true
+    code-fold: true
+    theme: cosmo
+execute:
+  warning: false
+  message: false
+---
+
+# 1. Project setup
+
+This project builds a dataset for predicting UEFA Champions League match outcomes.
+
+The domestic-league dataset covers the five major European leagues from the 2010/11 season through the 2025/26 season.
+
+The leagues are:
+
+- Premier League
+- La Liga
+- Bundesliga
+- Serie A
+- Ligue 1
+
+We will eventually combine this information with Champions League data.
+
+## Load packages
+
+```{r}
+#| label: setup
+
+packages <- c(
+  "readr",
+  "dplyr",
+  "purrr",
+  "stringr",
+  "tidyr",
+  "slider",
+  "lubridate"
+)
+
+for (p in packages) {
+  if (!requireNamespace(p, quietly = TRUE)) {
+    install.packages(p)
+  }
+}
+
+library(readr)
+library(dplyr)
+library(purrr)
+library(stringr)
+library(tidyr)
+library(slider)
+library(lubridate)
+
+#| label: seasons
+
+seasons <- c(
+  "1011",
+  "1112",
+  "1213",
+  "1314",
+  "1415",
+  "1516",
+  "1617",
+  "1718",
+  "1819",
+  "1920",
+  "2021",
+  "2122",
+  "2223",
+  "2324",
+  "2425",
+  "2526"
+)
+
+#| label: leagues
+
+leagues <- c(
+  England = "E0",
+  Spain = "SP1",
+  Germany = "D1",
+  Italy = "I1",
+  France = "F1"
+)
+
+leagues
+
+#| label: download-function
+
+download_league <- function(country, league_code, season) {
+
+  url <- paste0(
+    "https://www.football-data.co.uk/mmz4281/",
+    season,
+    "/",
+    league_code,
+    ".csv"
+  )
+
+  data <- tryCatch(
+    read_csv(
+      url,
+      # Force Date to stay as plain character on read. Without this,
+      # readr guesses each column's type per-file (based on a sample
+      # of that file's own rows), so some season files get Date
+      # auto-parsed into a real Date class while others don't -
+      # depending on how ambiguous that file's 2-digit years looked.
+      # Binding ~80 files together with mismatched types then produces
+      # exactly the inconsistent "10-12-22" vs "10-12-2022" mix seen
+      # downstream. Keeping Date as character here means our explicit
+      # lubridate::dmy() call later is the ONLY place parsing happens,
+      # applied uniformly across every row at once.
+      col_types = cols(
+        Date = col_character(),
+        .default = col_guess()
+      ),
+      show_col_types = FALSE
+    ),
+    error = function(e) {
+      message(
+        "Could not download: ",
+        country,
+        " ",
+        season
+      )
+      return(NULL)
+    }
+  )
+
+  if (is.null(data)) {
+    return(NULL)
+  }
+
+  data$country <- country
+  data$season_code <- season
+
+  data
+}
+
+#| label: download-data
+#| cache: true
+
+domestic_results <- map_dfr(
+  names(leagues),
+  function(country) {
+
+    map_dfr(
+      seasons,
+      function(season) {
+
+        download_league(
+          country,
+          leagues[[country]],
+          season
+        )
+      }
+    )
+  }
+)
+
+dim(domestic_results)
+
+#| label: raw-date-check
+
+# Confirm Date came through as plain character (not already a mix of
+# Date/character types from readr's per-file guessing) before we do
+# our own single parsing pass below.
+cat("Class of raw Date column:", class(domestic_results$Date), "\n")
+
+# Peek at a sample of the actual raw text formats present.
+domestic_results %>%
+  distinct(Date) %>%
+  slice_sample(n = 10)
+
+#| label: clean-data
+
+# NOTE ON DATES: football-data.co.uk changed its Date format partway
+# through its history - older season files use dd/mm/yy (2-digit
+# year), newer ones use dd/mm/yyyy (4-digit year). Parsing everything
+# with a single as.Date(Date, format = "%d/%m/%Y") silently mis-reads
+# 2-digit years literally (e.g. "10" becomes year 10 AD, not 2010),
+# which is why dates were showing up as 0010-01-29 etc. lubridate::dmy()
+# auto-detects both 2-digit and 4-digit years correctly (00-68 -> 2000s,
+# 69-99 -> 1900s), so it handles the mixed formats across seasons
+# without needing to know which seasons use which.
+domestic_clean <- domestic_results %>%
+
+  mutate(
+
+    Date = lubridate::dmy(Date),
+
+    home_goals = as.numeric(FTHG),
+
+    away_goals = as.numeric(FTAG),
+
+    result = case_when(
+      FTR == "H" ~ "Home",
+      FTR == "D" ~ "Draw",
+      FTR == "A" ~ "Away",
+      TRUE ~ NA_character_
+    ),
+
+    HS = as.numeric(HS),
+    AS = as.numeric(AS),
+    HST = as.numeric(HST),
+    AST = as.numeric(AST),
+    HC = as.numeric(HC),
+    AC = as.numeric(AC)
+
+  ) %>%
+
+  select(
+    Date,
+    country,
+    season_code,
+    HomeTeam,
+    AwayTeam,
+    home_goals,
+    away_goals,
+    result,
+    HS,
+    AS,
+    HST,
+    AST,
+    HC,
+    AC
+  ) %>%
+
+  filter(
+    !is.na(Date),
+    !is.na(home_goals),
+    !is.na(away_goals)
+  ) %>%
+
+  arrange(Date)
+
+#| label: date-sanity-check
+
+# Sanity check the fix: date range should now be a sensible span
+# (e.g. "2010-08-14" to "2026-05-XX"), with no absurd years like 0010.
+cat(
+  "Date range:",
+  as.character(min(domestic_clean$Date, na.rm = TRUE)),
+  "to",
+  as.character(max(domestic_clean$Date, na.rm = TRUE)),
+  "\n"
+)
+
+# Check whether the reparse introduced any NA dates (rows where
+# lubridate::dmy() couldn't recognize the format at all - safer than
+# a silently wrong date, but worth confirming nothing got dropped).
+cat(
+  "Rows with unparseable dates (NA):",
+  sum(is.na(domestic_results$Date) == FALSE & is.na(lubridate::dmy(domestic_results$Date))),
+  "\n"
+)
+
+# Confirm every date now renders with a full 4-digit year, with no
+# leftover 2-digit-year rows. Date is a proper R Date class at this
+# point (stored as days-since-1970, not text), so format() always
+# renders every row the same way regardless of how the original raw
+# string looked (e.g. "20/01/18" vs "24/11/2018") - this check should
+# always return 0 rows once lubridate::dmy() has been applied.
+domestic_clean %>%
+  mutate(year_check = format(Date, "%Y")) %>%
+  filter(nchar(year_check) != 4) %>%
+  nrow() %>%
+  { cat("Rows with non-4-digit year after formatting:", ., "\n") }
+
+#| label: inspect-data
+
+cat(
+  "Number of matches:",
+  nrow(domestic_clean),
+  "\n"
+)
+
+cat(
+  "Number of columns:",
+  ncol(domestic_clean),
+  "\n"
+)
+
+cat(
+  "Number of teams:",
+  length(
+    unique(
+      c(
+        domestic_clean$HomeTeam,
+        domestic_clean$AwayTeam
+      )
+    )
+  ),
+  "\n"
+)
+
+table(domestic_clean$country)
+
+table(domestic_clean$season_code)
+
+head(domestic_clean)
+
+#| label: team-data
+
+home_matches <- domestic_clean %>%
+
+  transmute(
+
+    Date,
+    country,
+    season_code,
+
+    team = HomeTeam,
+    opponent = AwayTeam,
+
+    home = 1,
+
+    goals_for = home_goals,
+    goals_against = away_goals,
+
+    shots_for = HS,
+    shots_against = AS,
+
+    shots_on_target_for = HST,
+    shots_on_target_against = AST,
+
+    corners_for = HC,
+    corners_against = AC,
+
+    result = case_when(
+      home_goals > away_goals ~ "Win",
+      home_goals == away_goals ~ "Draw",
+      TRUE ~ "Loss"
+    ),
+
+    points = case_when(
+      home_goals > away_goals ~ 3,
+      home_goals == away_goals ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+
+away_matches <- domestic_clean %>%
+
+  transmute(
+
+    Date,
+    country,
+    season_code,
+
+    team = AwayTeam,
+    opponent = HomeTeam,
+
+    home = 0,
+
+    goals_for = away_goals,
+    goals_against = home_goals,
+
+    shots_for = AS,
+    shots_against = HS,
+
+    shots_on_target_for = AST,
+    shots_on_target_against = HST,
+
+    corners_for = AC,
+    corners_against = HC,
+
+    result = case_when(
+      away_goals > home_goals ~ "Win",
+      away_goals == home_goals ~ "Draw",
+      TRUE ~ "Loss"
+    ),
+
+    points = case_when(
+      away_goals > home_goals ~ 3,
+      away_goals == home_goals ~ 1,
+      TRUE ~ 0
+    )
+  )
+
+
+team_matches <- bind_rows(
+  home_matches,
+  away_matches
+) %>%
+
+  arrange(
+    team,
+    Date
+  )
+
+#| label: rolling-form
+
+team_matches <- team_matches %>%
+
+  group_by(team) %>%
+
+  arrange(
+    Date,
+    .by_group = TRUE
+  ) %>%
+
+  mutate(
+
+    matches_before = row_number() - 1,
+
+    form_points_5 = lag(
+      slide_dbl(
+        points,
+        mean,
+        .before = 4,
+        .complete = FALSE
+      )
+    ),
+
+    form_goals_for_5 = lag(
+      slide_dbl(
+        goals_for,
+        mean,
+        .before = 4,
+        .complete = FALSE
+      )
+    ),
+
+    form_goals_against_5 = lag(
+      slide_dbl(
+        goals_against,
+        mean,
+        .before = 4,
+        .complete = FALSE
+      )
+    )
+
+  ) %>%
+
+  mutate(
+
+    form_goal_difference_5 =
+      form_goals_for_5 -
+      form_goals_against_5
+
+  ) %>%
+
+  ungroup()
+
+#| label: elo-ratings
+
+team_names <- unique(
+  c(
+    domestic_clean$HomeTeam,
+    domestic_clean$AwayTeam
+  )
+)
+
+elo_ratings <- setNames(
+  rep(1500, length(team_names)),
+  team_names
+)
+
+elo_history <- vector(
+  "list",
+  nrow(domestic_clean)
+)
+
+elo_k <- 20
+
+home_advantage <- 60
+
+#| label: calculate-elo
+
+for (i in seq_len(nrow(domestic_clean))) {
+
+  home_team <- domestic_clean$HomeTeam[i]
+
+  away_team <- domestic_clean$AwayTeam[i]
+
+  home_elo <- elo_ratings[home_team]
+
+  away_elo <- elo_ratings[away_team]
+
+
+  # Save ratings before the match
+
+  elo_history[[i]] <- data.frame(
+
+    Date = domestic_clean$Date[i],
+
+    HomeTeam = home_team,
+
+    AwayTeam = away_team,
+
+    home_elo = home_elo,
+
+    away_elo = away_elo
+
+  )
+
+
+  # Expected home result
+
+  expected_home <- 1 / (
+    1 +
+      10 ^ (
+        (
+          away_elo -
+            (
+              home_elo +
+                home_advantage
+            )
+        ) / 400
+      )
+  )
+
+
+  # Actual result
+
+  actual_home <- case_when(
+
+    domestic_clean$home_goals[i] >
+      domestic_clean$away_goals[i] ~ 1,
+
+    domestic_clean$home_goals[i] ==
+      domestic_clean$away_goals[i] ~ 0.5,
+
+    TRUE ~ 0
+
+  )
+
+
+  # Update Elo
+
+  change <- elo_k * (
+    actual_home -
+      expected_home
+  )
+
+
+  elo_ratings[home_team] <-
+    home_elo + change
+
+  elo_ratings[away_team] <-
+    away_elo - change
+}
+
+
+elo_history <- bind_rows(
+  elo_history
+)
+
+#| label: add-elo
+
+domestic_model_data <- domestic_clean %>%
+
+  left_join(
+    elo_history,
+    by = c(
+      "Date",
+      "HomeTeam",
+      "AwayTeam"
+    )
+  ) %>%
+
+  mutate(
+
+    elo_difference =
+      home_elo -
+      away_elo
+
+  )
+
+#| label: home-form
+
+home_features <- team_matches %>%
+
+  filter(home == 1) %>%
+
+  select(
+
+    Date,
+    country,
+    season_code,
+
+    HomeTeam = team,
+
+    home_form_points_5 =
+      form_points_5,
+
+    home_form_goals_for_5 =
+      form_goals_for_5,
+
+    home_form_goals_against_5 =
+      form_goals_against_5,
+
+    home_form_goal_difference_5 =
+      form_goal_difference_5
+
+  )
+
+#| label: away-form
+
+away_features <- team_matches %>%
+
+  filter(home == 0) %>%
+
+  select(
+
+    Date,
+    country,
+    season_code,
+
+    AwayTeam = team,
+
+    away_form_points_5 =
+      form_points_5,
+
+    away_form_goals_for_5 =
+      form_goals_for_5,
+
+    away_form_goals_against_5 =
+      form_goals_against_5,
+
+    away_form_goal_difference_5 =
+      form_goal_difference_5
+
+  )
+
+#| label: final-domestic-data
+
+domestic_model_data <- domestic_model_data %>%
+
+  left_join(
+    home_features,
+    by = c(
+      "Date",
+      "country",
+      "season_code",
+      "HomeTeam"
+    )
+  ) %>%
+
+  left_join(
+    away_features,
+    by = c(
+      "Date",
+      "country",
+      "season_code",
+      "AwayTeam"
+    )
+  ) %>%
+
+  distinct(
+    Date,
+    HomeTeam,
+    AwayTeam,
+    .keep_all = TRUE
+  )
+
+#| label: final-check
+
+cat(
+  "Rows:",
+  nrow(domestic_model_data),
+  "\n"
+)
+
+cat(
+  "Columns:",
+  ncol(domestic_model_data),
+  "\n"
+)
+
+cat(
+  "Earliest match:",
+  as.character(
+    min(
+      domestic_model_data$Date,
+      na.rm = TRUE
+    )
+  ),
+  "\n"
+)
+
+cat(
+  "Latest match:",
+  as.character(
+    max(
+      domestic_model_data$Date,
+      na.rm = TRUE
+    )
+  ),
+  "\n"
+)
+
+names(domestic_model_data)
+
+#| label: examples
+
+domestic_model_data %>%
+
+  select(
+    Date,
+    country,
+    HomeTeam,
+    AwayTeam,
+    home_goals,
+    away_goals,
+    result,
+    home_elo,
+    away_elo,
+    elo_difference,
+    home_form_points_5,
+    away_form_points_5
+  ) %>%
+
+  head(10)
+```
