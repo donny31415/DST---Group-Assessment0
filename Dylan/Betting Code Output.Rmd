@@ -1,0 +1,159 @@
+---
+title: "Premier League Betting"
+author: "Dylan Sharpe"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Introduction
+
+This analysis calculates the Brier score for five bookmakers across
+the 2021/22, 2022/23 and 2023/24 Premier League seasons.
+
+## Load packages
+
+```{r setup, message=FALSE, warning=FALSE}
+library(readr)
+library(tidyverse)
+library(knitr)
+```
+
+## Import the data
+
+```{r}
+Data_21_22 <- read_csv(
+  "https://www.football-data.co.uk/mmz4281/2122/E0.csv"
+) %>%
+  select(
+    FTR, B365H, B365D, B365A,
+    BWH, BWD, BWA,
+    PSH, PSD, PSA,
+    WHH, WHD, WHA,
+    VCH, VCD, VCA
+  )
+
+Data_22_23 <- read_csv(
+  "https://www.football-data.co.uk/mmz4281/2223/E0.csv"
+) %>%
+  select(
+    FTR, B365H, B365D, B365A,
+    BWH, BWD, BWA,
+    PSH, PSD, PSA,
+    WHH, WHD, WHA,
+    VCH, VCD, VCA
+  )
+
+Data_23_24 <- read_csv(
+  "https://www.football-data.co.uk/mmz4281/2324/E0.csv"
+) %>%
+  select(
+    FTR, B365H, B365D, B365A,
+    BWH, BWD, BWA,
+    PSH, PSD, PSA,
+    WHH, WHD, WHA,
+    VCH, VCD, VCA
+  )
+```
+
+## Calculate Brier scores
+
+```{r}
+calculate_brier <- function(data, season_name) {
+  
+  bookmaker_brier <- function(home_odds, draw_odds, away_odds, result) {
+    
+    complete <- !is.na(home_odds) &
+                !is.na(draw_odds) &
+                !is.na(away_odds) &
+                !is.na(result)
+    
+    home_odds <- home_odds[complete]
+    draw_odds <- draw_odds[complete]
+    away_odds <- away_odds[complete]
+    result <- result[complete]
+    
+    p_home <- 1 / home_odds
+    p_draw <- 1 / draw_odds
+    p_away <- 1 / away_odds
+    
+    total <- p_home + p_draw + p_away
+    
+    p_home <- p_home / total
+    p_draw <- p_draw / total
+    p_away <- p_away / total
+    
+    y_home <- ifelse(result == "H", 1, 0)
+    y_draw <- ifelse(result == "D", 1, 0)
+    y_away <- ifelse(result == "A", 1, 0)
+    
+    mean(
+      (p_home - y_home)^2 +
+      (p_draw - y_draw)^2 +
+      (p_away - y_away)^2
+    )
+  }
+  
+  tibble(
+    Season = season_name,
+    Bookmaker = c(
+      "Bet365",
+      "Betway",
+      "Paddy Power",
+      "William Hill",
+      "VC Bet"
+    ),
+    Brier_Score = c(
+      bookmaker_brier(
+        data$B365H, data$B365D, data$B365A, data$FTR
+      ),
+      bookmaker_brier(
+        data$BWH, data$BWD, data$BWA, data$FTR
+      ),
+      bookmaker_brier(
+        data$PSH, data$PSD, data$PSA, data$FTR
+      ),
+      bookmaker_brier(
+        data$WHH, data$WHD, data$WHA, data$FTR
+      ),
+      bookmaker_brier(
+        data$VCH, data$VCD, data$VCA, data$FTR
+      )
+    )
+  )
+}
+```
+
+## Results
+
+```{r}
+Brier_21_22 <- calculate_brier(Data_21_22, "2021/22")
+Brier_22_23 <- calculate_brier(Data_22_23, "2022/23")
+Brier_23_24 <- calculate_brier(Data_23_24, "2023/24")
+
+Brier_Results <- bind_rows(
+  Brier_21_22,
+  Brier_22_23,
+  Brier_23_24
+)
+```
+
+```{r}
+Brier_Results %>%
+  arrange(Season, Brier_Score)
+```
+
+```{r average-brier, echo=FALSE}
+
+Average_Brier <- Brier_Results %>%
+  group_by(Bookmaker) %>%
+  summarise(
+    Average_Brier_Score = mean(Brier_Score, na.rm = TRUE)
+  )
+
+kable(
+  Average_Brier,
+  digits = 5,
+  col.names = c("Bookmaker", "Average Brier Score"),
+  caption = "Average Brier Score Across the 2021/22–2023/24 Seasons"
+)
+```
