@@ -20,4 +20,12 @@ df = df[[c for c in keep if c in df.columns]].copy()
 print(df.shape)
 df.head()
 
+# count missing values per column before cleaning
+print(df.isna().sum())
+print("Rows before:", len(df))
+
+# drop any row with at least one missing value
+df = df.dropna().reset_index(drop=True)
+
+print("Rows after:", len(df))
 
