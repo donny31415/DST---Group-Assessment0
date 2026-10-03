@@ -11,6 +11,7 @@ Group: Don Athipozhiyil, Dylan Sharpe, Luke Chinoy & Pietro Neill
 
 ## Preparation
 pip install -r requirements.txt
+
 Data is downloaded automatically from football-data.co.uk when the notebooks run
 (internet connection needed). Manual steps: none.
 
