@@ -31,7 +31,21 @@ Data is downloaded automatically from football-data.co.uk when the notebooks run
 (internet connection needed). Manual steps: none.
 
 ## Reading order
-Original data can be found in data/raw and the cleaned version used for this project is found data/processed. Read the Python report in the Report file chronologically. The R Markdown Report can be found in Dylan's folder, but is an alternative report format.
+
+Read the Python report in the `Report` folder in this order:
+
+1. **01_Introduction**: the brief, how the team worked, and what our project is on.
+2. **02_PythonAnalysis.ipynb**: the code, with comments and references, and a visualisation of the data.
+3. **03-Wrapup.ipynb**: a brief analysis of the data, an explanation of the results, a word on the code, and a summary.
+
+## Data
+
+- **`data/raw`**: the original data, with details of where it came from.
+- **`data/processed`**: the cleaned version used for this project.
+
+## Team folders
+
+Our names are folders that hold some of the work we did. In particular, **Dylan's folder** has the R Markdown report and R code, which is an alternative report format. We used it to check that the Python results were the same.
 
 ## Resources
 [1] Keskin, K. A game theory approach to football predictions. Public Choice 206, 241–261 (2026). https://doi.org/10.1007/s11127-025-01317-x
