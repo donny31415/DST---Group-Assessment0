@@ -35,7 +35,7 @@ Data is downloaded automatically from football-data.co.uk when the notebooks run
 (internet connection needed). Manual steps: none.
 
 ## Reading order
-1. 
+Read the Python report in the Report file.
 
 ## Resources
 [1] Keskin, K. A game theory approach to football predictions. Public Choice 206, 241–261 (2026). https://doi.org/10.1007/s11127-025-01317-x
