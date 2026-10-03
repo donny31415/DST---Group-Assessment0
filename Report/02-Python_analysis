@@ -1,1 +1,12 @@
+import pandas as pd
 
+season_links = {
+    "21-22": "https://football-data.co.uk/mmz4281/2122/E0.csv",
+    "22-23": "https://football-data.co.uk/mmz4281/2223/E0.csv",
+    "23-24": "https://football-data.co.uk/mmz4281/2324/E0.csv",
+}
+
+# preview one season to check the link works
+df = pd.read_csv(season_links["21-22"], encoding="latin-1")
+print(df.shape)
+df.head()
