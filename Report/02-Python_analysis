@@ -1,4 +1,8 @@
+1. Data dictionary
+
 import pandas as pd
+import numpy as np
+
 
 season_links = {
     "21-22": "https://football-data.co.uk/mmz4281/2122/E0.csv",
@@ -10,3 +14,29 @@ season_links = {
 df = pd.read_csv(season_links["21-22"], encoding="latin-1")
 print(df.shape)
 df.head()
+
+2. Loading and cleaning
+
+
+keep = ["FTR",
+        "B365H", "B365D", "B365A",
+        "BWH", "BWD", "BWA",
+        "PSH", "PSD", "PSA",
+        "WHH", "WHD", "WHA",
+        "VCH", "VCD", "VCA"]
+
+# 1. load and clean each season separately
+season_dfs = {}
+for season, link in season_links.items():
+    d = pd.read_csv(link, encoding="latin-1")
+    
+# Removing rows with missing values
+    missing = [c for c in keep if c not in d.columns]
+    if missing:
+        print(f"{season}: columns not found: {missing}")
+
+    d = d[[c for c in keep if c in d.columns]].copy()
+    rows_before = len(d)
+    d = d.dropna().reset_index(drop=True)
+    print(f"{season}: {rows_before} rows loaded, {len(d)} after dropping missing values")
+    season_dfs[season] = d
