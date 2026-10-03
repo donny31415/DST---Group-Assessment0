@@ -1,5 +1,17 @@
-# DST Group Sprint 0
+# Data Science Toolbox: Sprint Assessment 0 - Don Athipozhiyil, Dylan Sharpe, Luke Chinoy, Pietro
 
-Data Science Toolbox: Sprint Assessment 0 - Don Athipozhiyil, Dylan Sharpe, Luke Chinoy, Pietro
+# Bookmaker odds vs match outcomes (football analytics)
 
-Our domain is football analytics. We aim to answer the question "How accurately can we predict the winner of the 2026/27 UEFA Champions League using historical team performance and strength metrics?"
+## Project group
+- Don: Cleaned a single season of data and experimented with Brier score function in Python
+- Dylan: 
+- Luke: 
+- Pietro: 
+
+## Preparation
+pip install -r requirements.txt
+Data is downloaded automatically from football-data.co.uk when the notebooks run
+(internet connection needed). Manual steps: none.
+
+## Reading order
+1. 
