@@ -1,13 +1,9 @@
 # Data Science Toolbox: Sprint Assessment 0 
-Group: Don Athipozhiyil, Dylan Sharpe, Luke Chinoy & Pietro Neill
 
 # Bookmaker odds vs match outcomes (football analytics)
 
 ## Project group
-- Don: Cleaned a single season of data and experimented with Brier score function in Python
-- Dylan: 
-- Luke: 
-- Pietro: 
+Don Athipozhiyil, Dylan Sharpe, Luke Chinoy, Pietro Neill
 
 ## Preparation
 ### R Markdown Report:
