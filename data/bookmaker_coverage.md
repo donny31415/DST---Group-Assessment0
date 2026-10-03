@@ -18,4 +18,4 @@ Missing = matches (out of 380) with no odds. A dash means the bookmaker is not i
 | CL | Coral | – | – | – | – | 98 (26%) |
 | LB | Ladbrokes | – | – | – | – | 94 (25%) |
 
-Only B365, BW and PS appear in all five seasons. Missing data is mostly one block at the end of a season.
+
