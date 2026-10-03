@@ -20,10 +20,15 @@ The packages that need to be installed in R if the alternative report is to be r
 
 -knitr
 
+Data is downloaded automatically from football-data.co.uk when the notebooks run
+(internet connection needed). Manual steps: none.
+
 ### Python Report:
 
 -pip install -r requirements.txt
+
 -import numpy as np
+
 -import pandas as pd
 
 Data is downloaded automatically from football-data.co.uk when the notebooks run
