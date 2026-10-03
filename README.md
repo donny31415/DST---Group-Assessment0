@@ -10,15 +10,17 @@ Group: Don Athipozhiyil, Dylan Sharpe, Luke Chinoy & Pietro Neill
 - Pietro: 
 
 ## Preparation
-R Markdown Report:
+### R Markdown Report:
+
 The packages that need to be installed in R if the alternative report is to be ran are below:
+
 -readr
 
 -tidyverse
 
 -knitr
 
-Python Report:
+### Python Report:
 
 -pip install -r requirements.txt
 -import numpy as np
