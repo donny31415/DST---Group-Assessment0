@@ -1,5 +1,6 @@
-1. Data dictionary
+## 1. Data dictionary
 
+```{python}
 import pandas as pd
 import numpy as np
 
@@ -14,10 +15,11 @@ season_links = {
 df = pd.read_csv(season_links["21-22"], encoding="latin-1")
 print(df.shape)
 df.head()
+```
 
-2. Loading and cleaning
+## 2. Loading and cleaning
 
-
+```{python}
 keep = ["FTR",
         "B365H", "B365D", "B365A",
         "BWH", "BWD", "BWA",
@@ -40,8 +42,11 @@ for season, link in season_links.items():
     d = d.dropna().reset_index(drop=True)
     print(f"{season}: {rows_before} rows loaded, {len(d)} after dropping missing values")
     season_dfs[season] = d
+```
 
-3. Brier score function
+## 3. Brier score function
+
+```{python}
 # 2. Brier score functions
 bookmakers = {"Bet365": "B365", "Bwin": "BW", "Pinnacle": "PS",
               "William Hill": "WH", "VC Bet": "VC"}
@@ -52,5 +57,20 @@ def odds_to_probs(odds):
 
 def brier(probs, outcomes):
     return ((probs - outcomes) ** 2).sum(axis=1)
+```
 
+## 4. Individual seasons and averaging
 
+```{python}
+# 3. score every bookmaker in every season
+results = {}
+for season, d in season_dfs.items():
+    y = pd.get_dummies(d["FTR"]).reindex(columns=["H", "D", "A"], fill_value=0).to_numpy(dtype=float)
+    results[season] = {}
+    for name, p in bookmakers.items():
+        odds = d[[f"{p}H", f"{p}D", f"{p}A"]].to_numpy(dtype=float)
+        results[season][name] = brier(odds_to_probs(odds), y).mean()
+
+summary = pd.DataFrame(results)       # rows = bookmakers, columns = seasons
+print(summary.round(4))
+```
