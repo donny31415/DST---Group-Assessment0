@@ -1,5 +1,5 @@
 # Bookmaker coverage, 2021/22 to 2025/26
-With the help of Claude we were Able to choose which bookies and seasons to use by looking at where data is missing.
+With the help of Claude AI, we were able to choose which bookmakers and seasons to use by looking at where data is missing.
 Missing = matches (out of 380) with no odds. A dash means the bookmaker is not in that season's file. ⚠ means more than about a third missing. 
 
 | Acronym | Bookmaker | 2021/22 | 2022/23 | 2023/24 | 2024/25 | 2025/26 |
