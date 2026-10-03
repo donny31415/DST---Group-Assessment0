@@ -1,5 +1,5 @@
 # Data Science Toolbox: Sprint Assessment 0 
-Don Athipozhiyil, Dylan Sharpe, Luke Chinoy, Pietro Neill
+Don Athipozhiyil, Dylan Sharpe, Luke Chinoy & Pietro Neill
 
 # Bookmaker odds vs match outcomes (football analytics)
 
