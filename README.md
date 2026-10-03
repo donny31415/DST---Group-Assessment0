@@ -10,22 +10,22 @@ Don Athipozhiyil, Dylan Sharpe, Luke Chinoy, Pietro Neill
 
 The packages that need to be installed in R if the alternative report is to be ran are below:
 
--readr
+- readr
 
--tidyverse
+- tidyverse
 
--knitr
+- knitr
 
 Data is downloaded automatically from football-data.co.uk when the notebooks run
 (internet connection needed). Manual steps: none.
 
 ### Python Report:
 
--pip install -r requirements.txt
+- pip install -r requirements.txt
 
--import numpy as np
+- import numpy as np
 
--import pandas as pd
+- import pandas as pd
 
 Data is downloaded automatically from football-data.co.uk when the notebooks run
 (internet connection needed). Manual steps: none.
