@@ -34,7 +34,7 @@ Read the Python report in the `Report` folder in this order:
 
 1. **01_Introduction**: the brief, how the team worked, and what our project is on.
 2. **02_PythonAnalysis.ipynb**: the code, with comments and references, and a visualisation of the data.
-3. **03_RAnalysis**: alternative analysis in R to validate our results and to decide which method is more applicable to us moving forward.
+3. **03_RAnalysis**: alternative analysis in R to validate our results and to decide which language is more applicable to us moving forward.
 4. **04_Wrapup.ipynb**: a brief analysis of the data, an explanation of the results, a word on the code, and a summary.
 
 ## Data
