@@ -21,8 +21,6 @@ Data is downloaded automatically from football-data.co.uk when the notebooks run
 
 ### Python Report:
 
-- pip install -r requirements.txt
-
 - import numpy as np
 
 - import pandas as pd
@@ -36,7 +34,7 @@ Read the Python report in the `Report` folder in this order:
 
 1. **01_Introduction**: the brief, how the team worked, and what our project is on.
 2. **02_PythonAnalysis.ipynb**: the code, with comments and references, and a visualisation of the data.
-3. **03-Wrapup.ipynb**: a brief analysis of the data, an explanation of the results, a word on the code, and a summary.
+3. **03_Wrapup.ipynb**: a brief analysis of the data, an explanation of the results, a word on the code, and a summary.
 
 ## Data
 
